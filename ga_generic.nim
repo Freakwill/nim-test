@@ -4,7 +4,8 @@ import std/[random,
   strutils,
   sequtils,
   math,
-  algorithm]
+  algorithm,
+  sugar]
 import seqtools
 
 randomize()
@@ -44,8 +45,7 @@ proc `!` (pop: Population): Population =
 
 proc `*` (mother: Chromosome, father:Chromosome): Chromosome = 
   var position = rand(8) + 1
-  var son: Chromosome
-  son = father
+  var son = father
   son[0..^position] = mother[0..^position]
   return son
 
@@ -67,12 +67,10 @@ proc rand_chromesome(size:static int): Chromosome[size] =
   for val in result.mitems:
     val = rand(1)
 
-
 proc rand_population(size:int, n:static int): Population[n] =
-
-  for _ in 0 ..< size:
-    let c = rand_chromesome(n)
-    result.add c
+  collect:
+    for _ in 0 ..< size:
+      rand_chromesome(n)
 
 
 proc select_aspirants(pop: Population, size: int = 3): Population =
@@ -81,7 +79,7 @@ proc select_aspirants(pop: Population, size: int = 3): Population =
   copy.shuffle()
   return (copy[0..<size])
 
-func best(pop:Population, fitness: proc (c:Chromosome): int):Chromosome = 
+func best(pop:Population, fitness: proc (c:auto): int):auto = 
   let i = maxIndex pop.map(fitness)
   return pop[i]
 
