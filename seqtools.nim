@@ -1,5 +1,6 @@
 #!/usr/bin/env nim
 
+import std/[sequtils, sugar]
 
 proc remove*[T](s: var seq[T], val: T): seq[T] {.discardable.} =
   for i, x in s:
@@ -12,9 +13,15 @@ proc remove_all*[T](s: var seq[T], val: T): seq[T] {.discardable.} =
     if x == val:
       s.delete(i)
 
+
 template arrayWith*(size: static int, val: untyped): auto =
-  # Usage: var a = arrayWith(4, rand(1))
-  var arr: array[size, typeof(val)]
-  for aVal in arr.mitems:
+  # Usage: var a = arrayWith(3, rand(1))
+  var result: array[size, typeof(val)]
+  for aVal in result.mitems:
     aVal = val
-  arr
+  return result
+
+
+func best*[T, S](b: seq[T], f: T->S): T =
+  let i = maxIndex b.map(f)
+  return b[i]

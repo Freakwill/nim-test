@@ -15,10 +15,6 @@ randomize()
 ]#
 
 
-# Arrays
-
-const
-  n_genes: int = 15
 
 type
   Gene = int
@@ -26,18 +22,18 @@ type
   Population[L: static[int]] = seq[Chromosome[L]]
 
 
-func fitness(c: Chromosome): int
+func fitness[T: Chromosome](c: T): int
+
 
 proc `$` (c: Chromosome): string =
-  return c.join("|") & " = " & $fitness(c)
+  return c.join("|") & " = " & $c.fitness()
 
 
 proc `!` (mother: Chromosome): Chromosome =
   var son = mother
-  var position: int
-  for position in 0 ..< n_genes:
+  for position, g in mother:
     if rand(1.0) < 0.25:
-      son[position] = 1 - son[position]
+      son[position] = 1 - g
   return son
 
 proc `!` (pop: Population): Population =
@@ -64,8 +60,7 @@ proc `@` (pop: Population): Population =
 
 
 proc rand_chromesome(size:static int): Chromosome[size] =
-  for val in result.mitems:
-    val = rand(1)
+  return arrayWith(size, rand(1))
 
 proc rand_population(size:int, n:static int): Population[n] =
   collect:
@@ -73,15 +68,11 @@ proc rand_population(size:int, n:static int): Population[n] =
       rand_chromesome(n)
 
 
-proc select_aspirants(pop: Population, size: int = 3): Population =
+proc select_aspirants(pop: Population, size: int=3): Population =
   # select `size` individuals from the list `individuals` in one tournament.
   var copy = pop
   copy.shuffle()
   return (copy[0..<size])
-
-func best(pop:Population, fitness: proc (c:auto): int):auto = 
-  let i = maxIndex pop.map(fitness)
-  return pop[i]
 
 
 proc select(pop:Population, n_sel:int=10, tournsize:int=3): Population =
@@ -103,13 +94,10 @@ proc select(pop:Population, n_sel:int=10, tournsize:int=3): Population =
         aspirants = rest
     else:
         aspirants = select_aspirants(rest, size)
-    var winner = best(aspirants, fitness)
+    var winner = aspirants.best fitness
     winners.add(winner); rest.remove(winner) # move winner from original pop to winners
     n_rest -= 1
   return winners
-
-func fitness(c:Chromosome):int =
-  return c.sum() - 2*(c[1] + c[4]+c[9])
 
 
 proc evolve(pop:Population, n_gens:int=10, verbose:bool=true):Population =
@@ -137,6 +125,13 @@ proc evolve(pop:Population, n_gens:int=10, verbose:bool=true):Population =
     new_pop.add hof
 
   return new_pop
+
+
+func fitness[T: Chromosome](c: T): int =
+  return c.sum() - 2*(c[1] + c[4]+c[9])
+
+const
+  n_genes: int = 15
 
 var pop = rand_population(30, n_genes)
 pop = evolve(pop, 50)
